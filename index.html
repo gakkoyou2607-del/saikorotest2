@@ -17,7 +17,7 @@
     </div>
 
     <script>
-    const correctPw = "yourPassword";  // ←ここに本当のパスワードを入れてください
+    const correctPw = "1234";  // ←ここを任意のパスワードに
 
     document.getElementById("btnEnter").addEventListener("click", () => {
         const pw = document.getElementById("pw").value;
@@ -32,20 +32,18 @@
 
     document.getElementById("btnRun").addEventListener("click", async () => {
         const pyodide = await pyodideReady;
+
         const code = `
 import random
 a = random.randrange(1, 7)
 print("出た目は", a)
 `;
 
-        // 出力を初期化
         document.getElementById("output").textContent = "";
 
         pyodide.setStdout(s => {
             document.getElementById("output").textContent += s + "\\n";
         });
-
-        pyodide.setStdin(() => prompt("入力してください："));
 
         try {
             await pyodide.runPythonAsync(code);
