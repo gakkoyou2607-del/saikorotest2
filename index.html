@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>サイコロ実行テスト</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
@@ -15,21 +16,29 @@
 
     document.getElementById("btnRun").addEventListener("click", async () => {
         const pyodide = await pyodideReady;
+
         const code = `
 import random
 a = random.randrange(1, 7)
 print("出た目は", a)
 `;
-        document.getElementById("output").textContent = "";
 
-        pyodide.setStdout(s => {
-            document.getElementById("output").textContent += s + "\n";
+        const out = document.getElementById("output");
+        out.textContent = "";
+
+        // stdout を安全に書き換え
+        pyodide.setStdout((msg) => {
+            out.textContent += msg + "\n";
+        });
+
+        pyodide.setStderr((msg) => {
+            out.textContent += "[エラー] " + msg + "\n";
         });
 
         try {
             await pyodide.runPythonAsync(code);
-        } catch(err) {
-            document.getElementById("output").textContent = "エラー: " + err;
+        } catch (err) {
+            out.textContent = "エラー: " + err;
         }
     });
     </script>
