@@ -2,8 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>パスワード付き Python 実行ページ</title>
+    <title>パスワードつき Python 実行</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        #main { display: none; margin-top: 20px; }
+        #output { background: #eee; padding: 10px; white-space: pre-wrap; }
+    </style>
 </head>
 <body>
 
@@ -11,28 +15,25 @@
 <input type="password" id="pw">
 <button onclick="checkPw()">入る</button>
 
-<hr>
-
-<div id="main" style="display:none;">
+<div id="main">
     <h2>サイコロ</h2>
-    <button onclick="runPython()">▶ 実行</button>
-
-    <pre id="output" style="
-        white-space: pre-wrap;
-        background:#eee;
-        padding:10px;
-        margin-top:10px;
-        height:200px;
-        overflow:auto;"></pre>
+    <button id="runBtn" disabled>▶ 実行</button>
+    <pre id="output"></pre>
 </div>
 
 <script>
 let pyodideReady = loadPyodide();
-const CORRECT_PW = "1234";   // ← パスワード ※自由に変えてOK
+let pyodideLoaded = false;
+
+// Pyodide ロード完了
+pyodideReady.then(() => {
+    pyodideLoaded = true;
+    document.getElementById("runBtn").disabled = false;
+});
 
 function checkPw() {
-    const p = document.getElementById("pw").value;
-    if (p === CORRECT_PW) {
+    const pw = document.getElementById("pw").value;
+    if (pw === "1234") {
         document.getElementById("main").style.display = "block";
     } else {
         alert("パスワードが違います");
@@ -40,20 +41,32 @@ function checkPw() {
 }
 
 async function runPython() {
+    if (!pyodideLoaded) {
+        alert("まだ読み込み中です。1〜2秒待ってください。");
+        return;
+    }
+
     const pyodide = await pyodideReady;
 
+    document.getElementById("output").textContent = "--- 実行開始 ---\n";
+
+    pyodide.setStdout(s => {
+        document.getElementById("output").textContent += s + "\n";
+    });
+
+    pyodide.setStdin(() => prompt("入力してください："));
+
     let code = `
-import random, sys
+import random
 
 a = random.randrange(2, 6)
-print("出た目:", a)
 
 i = 1
 while i == 1:
-    print("次の処理に進みます")
+    print(a)
     b = 0
     while b == 0:
-        n = input("1. 続ける / 2. 終わる: ")
+        n = input("1. 続ける 2. 終わる (1か2の数字を入れてね): ")
         if n == "1":
             b = 1
         elif n == "2":
@@ -65,19 +78,10 @@ while i == 1:
             b = 0
 `;
 
-    // 出力を画面に確実に表示
-    pyodide.setStdout(s => {
-        document.getElementById("output").textContent += s + "\n";
-    });
-
-    // input() は prompt で受け取る
-    pyodide.setStdin(() => prompt("入力してください："));
-
-    // 直前のログを消さない（見えるようにする）
-    document.getElementById("output").textContent += "\n--- 実行開始 ---\n";
-
     await pyodide.runPythonAsync(code);
 }
+
+document.getElementById("runBtn").onclick = runPython;
 </script>
 
 </body>
