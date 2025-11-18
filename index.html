@@ -1,75 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>パスワード付き Python 実行（見やすく）</title>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <meta charset="utf-8">
+    <title>サイコロ実行テスト</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
-<body style="font-family: sans-serif; padding: 20px; background: #f0f0f0;">
+<body>
+    <h2>サイコロ</h2>
 
-  <h2>パスワードを入力</h2>
-  <input type="password" id="pw" placeholder="パスワード">
-  <button id="btnEnter">▶ 入る</button>
+    <div id="loading">🔄 Python 読み込み中...</div>
 
-  <div id="main" style="display: none; margin-top: 30px; padding: 15px; background: #fff; border: 2px solid #888;">
-    <h2>サイコロを振る</h2>
-    <button id="btnRun">▶ 実行</button>
-    <pre id="output"
-         style="
-           white-space: pre-wrap;
-           background: #000;
-           color: #fff;
-           padding: 20px;
-           margin-top: 15px;
-           font-size: 1.4em;
-           min-height: 50px;
-           overflow-y: auto;
-         ">
-      <!-- 結果がここに表示されます -->
-    </pre>
-  </div>
+    <button id="btnRun" disabled>▶ 実行</button>
 
-  <script>
-    const correctPw = "1234";
+    <pre id="output" style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;"></pre>
 
-    document.getElementById("btnEnter").addEventListener("click", () => {
-      const pw = document.getElementById("pw").value;
-      if (pw === correctPw) {
-        document.getElementById("main").style.display = "block";
-        document.getElementById("pw").value = "";
-        document.getElementById("pw").disabled = true;
-        document.getElementById("btnEnter").disabled = true;
-      } else {
-        alert("パスワードが違います");
-      }
-    });
+    <script>
+    let pyodide;
 
-    let pyodideReady = loadPyodide();
+    (async () => {
+        pyodide = await loadPyodide();
+
+        document.getElementById("loading").textContent = "Python 読み込み完了 ✔";
+        document.getElementById("btnRun").disabled = false;
+    })();
 
     document.getElementById("btnRun").addEventListener("click", async () => {
-      const pyodide = await pyodideReady;
 
-      const code = `
+        const code = `
 import random
 a = random.randrange(1, 7)
 print("出た目は", a)
 `;
 
-      const outputElem = document.getElementById("output");
-      outputElem.textContent = "";
+        document.getElementById("output").textContent = "";
 
-      pyodide.setStdout(s => {
-        outputElem.textContent += s + "\\n";
-        outputElem.scrollTop = outputElem.scrollHeight;
-      });
+        pyodide.setStdout(s => {
+            document.getElementById("output").textContent += s + "\n";
+        });
 
-      try {
-        await pyodide.runPythonAsync(code);
-      } catch (err) {
-        outputElem.textContent = "エラー: " + err;
-      }
+        try {
+            await pyodide.runPythonAsync(code);
+        } catch(err) {
+            document.getElementById("output").textContent = "エラー: " + err;
+        }
     });
-  </script>
-
+    </script>
 </body>
 </html>
