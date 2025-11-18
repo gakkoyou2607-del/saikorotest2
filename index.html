@@ -12,13 +12,18 @@
 
     <div id="main" style="display:none; margin-top:20px;">
         <h2>サイコロ</h2>
-        <button id="btnRun">▶ 実行</button>
+
+        <!-- Pyodide読み込み完了までは押せないようにする -->
+        <button id="btnRun" disabled>▶ 実行（読み込み中…）</button>
+
         <pre id="output" style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;"></pre>
     </div>
 
     <script>
-    const correctPw = "1234";  // ←ここを任意のパスワードに
 
+    const correctPw = "1234";  // パスワード
+
+    // パスワードチェック
     document.getElementById("btnEnter").addEventListener("click", () => {
         const pw = document.getElementById("pw").value;
         if (pw === correctPw) {
@@ -28,16 +33,27 @@
         }
     });
 
-    let pyodideReady = loadPyodide();
+    // Pyodide ロード処理
+    let pyodide = null;
 
+    async function initPyodide() {
+        pyodide = await loadPyodide();
+
+        // 読み込み終わったらボタンを有効化
+        const btn = document.getElementById("btnRun");
+        btn.disabled = false;
+        btn.textContent = "▶ 実行";
+    }
+
+    initPyodide();
+
+    // 実行ボタン
     document.getElementById("btnRun").addEventListener("click", async () => {
-        const pyodide = await pyodideReady;
-
         const code = `
 import random
 a = random.randrange(1, 7)
 print("出た目は", a)
-`;
+        `;
 
         document.getElementById("output").textContent = "";
 
@@ -47,7 +63,7 @@ print("出た目は", a)
 
         try {
             await pyodide.runPythonAsync(code);
-        } catch(err) {
+        } catch (err) {
             document.getElementById("output").textContent = "エラー: " + err;
         }
     });
