@@ -2,72 +2,36 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>パスワード付き Python 実行</title>
+    <title>サイコロ実行テスト</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
 <body>
-    <h2>パスワードを入力</h2>
-    <input type="password" id="pw" placeholder="パスワード">
-    <button id="btnEnter">▶ 入る</button>
-
-    <div id="main" style="display:none; margin-top:20px;">
-        <h2>サイコロ</h2>
-
-        <!-- Pyodide読み込み完了までは押せないようにする -->
-        <button id="btnRun" disabled>▶ 実行（読み込み中…）</button>
-
-        <pre id="output" style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;"></pre>
-    </div>
+    <h2>サイコロ</h2>
+    <button id="btnRun">▶ 実行</button>
+    <pre id="output" style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;"></pre>
 
     <script>
+    let pyodideReady = loadPyodide();
 
-    const correctPw = "playlogic";  // パスワード
-
-    // パスワードチェック
-    document.getElementById("btnEnter").addEventListener("click", () => {
-        const pw = document.getElementById("pw").value;
-        if (pw === correctPw) {
-            document.getElementById("main").style.display = "block";
-        } else {
-            alert("パスワードが違います");
-        }
-    });
-
-    // Pyodide ロード処理
-    let pyodide = null;
-
-    async function initPyodide() {
-        pyodide = await loadPyodide();
-
-        // 読み込み終わったらボタンを有効化
-        const btn = document.getElementById("btnRun");
-        btn.disabled = false;
-        btn.textContent = "▶ 実行";
-    }
-
-    initPyodide();
-
-    // 実行ボタン
     document.getElementById("btnRun").addEventListener("click", async () => {
+        const pyodide = await pyodideReady;
         const code = `
 import random
 a = random.randrange(1, 7)
 print("出た目は", a)
-        `;
-
+`;
         document.getElementById("output").textContent = "";
 
         pyodide.setStdout(s => {
-            document.getElementById("output").textContent += s + "\\n";
+            document.getElementById("output").textContent += s + "\n";
         });
 
         try {
             await pyodide.runPythonAsync(code);
-        } catch (err) {
+        } catch(err) {
             document.getElementById("output").textContent = "エラー: " + err;
         }
     });
     </script>
 </body>
 </html>
-
