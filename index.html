@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>サイコロ</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+</head>
+<body>
+
+<h2>パスワードを入力</h2>
+<input type="password" id="pw">
+<button onclick="checkPW()">➡ 入る</button>
+
+<div id="main" style="display:none;">
+
+    <h2>サイコロ</h2>
+    <button onclick="runPython()">▶ 実行</button>
+
+    <pre id="output"
+         style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;">
+    </pre>
+
+</div>
+
+<script>
+let pyodideReady = loadPyodide();
+
+// パスワード機能
+function checkPW() {
+    const pw = document.getElementById("pw").value;
+    if (pw === "PlayLogic") {
+        document.getElementById("main").style.display = "block";
+    } else {
+        alert("パスワードが違います");
+    }
+}
+
+// Python 実行
+async function runPython() {
+    const pyodide = await pyodideReady;
+
+    const code = `
+import random
+
+a = random.randrange(2, 6)
+
+i = 1
+while i == 1:
+    print("出た数字:", a)
+    b = 0
+    while b == 0:
+        n = input("1. 続ける  2. 終わる → ")
+        if n == "1":
+            a = random.randrange(2, 6)
+            b = 1
+        elif n == "2":
+            print("終了")
+            i = 0
+            b = 1
+        else:
+            print("有効じゃありません")
+            b = 0
+`;
+
+    // 出力先を作る
+    document.getElementById("output").textContent = "";
+
+    // print の出力を表示
+    pyodide.setStdout(s => {
+        document.getElementById("output").textContent += s + "\n";
+    });
+
+    // input の代わりに prompt を使用
+    pyodide.setStdin(() => {
+        return prompt("入力してください（1 or 2）");
+    });
+
+    await pyodide.runPythonAsync(code);
+}
+</script>
+
+</body>
+</html>
