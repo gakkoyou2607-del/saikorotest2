@@ -2,88 +2,57 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>パスワードつき Python 実行</title>
+    <title>パスワード付き Python 実行</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
-    <style>
-        #main { display: none; margin-top: 20px; }
-        #output { background: #eee; padding: 10px; white-space: pre-wrap; }
-    </style>
 </head>
 <body>
+    <h2>パスワードを入力</h2>
+    <input type="password" id="pw" placeholder="パスワード">
+    <button id="btnEnter">▶ 入る</button>
 
-<h2>パスワードを入力</h2>
-<input type="password" id="pw">
-<button onclick="checkPw()">入る</button>
+    <div id="main" style="display:none; margin-top:20px;">
+        <h2>サイコロ</h2>
+        <button id="btnRun">▶ 実行</button>
+        <pre id="output" style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;"></pre>
+    </div>
 
-<div id="main">
-    <h2>サイコロ</h2>
-    <button id="runBtn" disabled>▶ 実行</button>
-    <pre id="output"></pre>
-</div>
+    <script>
+    const correctPw = "yourPassword";  // ←ここに本当のパスワードを入れてください
 
-<script>
-let pyodideReady = loadPyodide();
-let pyodideLoaded = false;
-
-// Pyodide ロード完了
-pyodideReady.then(() => {
-    pyodideLoaded = true;
-    document.getElementById("runBtn").disabled = false;
-});
-
-function checkPw() {
-    const pw = document.getElementById("pw").value;
-    if (pw === "playlogic") {
-        document.getElementById("main").style.display = "block";
-    } else {
-        alert("パスワードが違います");
-    }
-}
-
-async function runPython() {
-    if (!pyodideLoaded) {
-        alert("まだ読み込み中です。1〜2秒待ってください。");
-        return;
-    }
-
-    const pyodide = await pyodideReady;
-
-    document.getElementById("output").textContent = "--- 実行開始 ---\n";
-
-    pyodide.setStdout(s => {
-        document.getElementById("output").textContent += s + "\n";
+    document.getElementById("btnEnter").addEventListener("click", () => {
+        const pw = document.getElementById("pw").value;
+        if (pw === correctPw) {
+            document.getElementById("main").style.display = "block";
+        } else {
+            alert("パスワードが違います");
+        }
     });
 
-    pyodide.setStdin(() => prompt("入力してください："));
+    let pyodideReady = loadPyodide();
 
-    let code = `
+    document.getElementById("btnRun").addEventListener("click", async () => {
+        const pyodide = await pyodideReady;
+        const code = `
 import random
-
-a = random.randrange(2, 6)
-
-i = 1
-while i == 1:
-    print(a)
-    b = 0
-    while b == 0:
-        n = input("1. 続ける 2. 終わる (1か2の数字を入れてね): ")
-        if n == "1":
-            b = 1
-        elif n == "2":
-            print("終了")
-            i = 0
-            b = 1
-        else:
-            print("有効じゃありません")
-            b = 0
+a = random.randrange(1, 7)
+print("出た目は", a)
 `;
 
-    await pyodide.runPythonAsync(code);
-}
+        // 出力を初期化
+        document.getElementById("output").textContent = "";
 
-document.getElementById("runBtn").onclick = runPython;
-</script>
+        pyodide.setStdout(s => {
+            document.getElementById("output").textContent += s + "\\n";
+        });
 
+        pyodide.setStdin(() => prompt("入力してください："));
+
+        try {
+            await pyodide.runPythonAsync(code);
+        } catch(err) {
+            document.getElementById("output").textContent = "エラー: " + err;
+        }
+    });
+    </script>
 </body>
 </html>
-
