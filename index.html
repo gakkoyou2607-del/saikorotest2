@@ -2,56 +2,59 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>サイコロ</title>
+    <title>パスワード付き Python 実行ページ</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
 <body>
 
 <h2>パスワードを入力</h2>
 <input type="password" id="pw">
-<button onclick="checkPW()">➡ 入る</button>
+<button onclick="checkPw()">入る</button>
+
+<hr>
 
 <div id="main" style="display:none;">
-
     <h2>サイコロ</h2>
     <button onclick="runPython()">▶ 実行</button>
 
-    <pre id="output"
-         style="white-space: pre-wrap; background:#eee; padding:10px; margin-top:10px;">
-    </pre>
-
+    <pre id="output" style="
+        white-space: pre-wrap;
+        background:#eee;
+        padding:10px;
+        margin-top:10px;
+        height:200px;
+        overflow:auto;"></pre>
 </div>
 
 <script>
 let pyodideReady = loadPyodide();
+const CORRECT_PW = "1234";   // ← パスワード ※自由に変えてOK
 
-// パスワード機能
-function checkPW() {
-    const pw = document.getElementById("pw").value;
-    if (pw === "PlayLogic") {
+function checkPw() {
+    const p = document.getElementById("pw").value;
+    if (p === CORRECT_PW) {
         document.getElementById("main").style.display = "block";
     } else {
         alert("パスワードが違います");
     }
 }
 
-// Python 実行
 async function runPython() {
     const pyodide = await pyodideReady;
 
-    const code = `
-import random
+    let code = `
+import random, sys
 
 a = random.randrange(2, 6)
+print("出た目:", a)
 
 i = 1
 while i == 1:
-    print("出た数字:", a)
+    print("次の処理に進みます")
     b = 0
     while b == 0:
-        n = input("1. 続ける  2. 終わる → ")
+        n = input("1. 続ける / 2. 終わる: ")
         if n == "1":
-            a = random.randrange(2, 6)
             b = 1
         elif n == "2":
             print("終了")
@@ -62,18 +65,16 @@ while i == 1:
             b = 0
 `;
 
-    // 出力先を作る
-    document.getElementById("output").textContent = "";
-
-    // print の出力を表示
+    // 出力を画面に確実に表示
     pyodide.setStdout(s => {
         document.getElementById("output").textContent += s + "\n";
     });
 
-    // input の代わりに prompt を使用
-    pyodide.setStdin(() => {
-        return prompt("入力してください（1 or 2）");
-    });
+    // input() は prompt で受け取る
+    pyodide.setStdin(() => prompt("入力してください："));
+
+    // 直前のログを消さない（見えるようにする）
+    document.getElementById("output").textContent += "\n--- 実行開始 ---\n";
 
     await pyodide.runPythonAsync(code);
 }
